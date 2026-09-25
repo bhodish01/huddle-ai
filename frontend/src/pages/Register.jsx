@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "../config";
 import { useState } from "react";
 import { redirect, useNavigate } from "react-router-dom";
 
@@ -17,7 +18,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/register", {
+      const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
