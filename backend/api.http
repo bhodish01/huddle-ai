@@ -1,0 +1,22 @@
+POST http://localhost:8080/api/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "name":"darshan",
+  "email":"darshan@gmail.com",
+  "password":"darshan"
+}
+
+###
+
+POST http://localhost:8080/api/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email":"darshan@gmail.com",
+  "password":"darshan"
+}
+
+### Test Protected Route
+GET http://localhost:8080/api/auth/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWE1NTZjOWRmYzk2Y2E0OGUxMDc1YjAiLCJpYXQiOjE3ODkyNDA2MDMsImV4cCI6MTc4OTMyNzAwM30.cPiXY9gPnNLxCk7kzgkMolUQAf7kj2QKmSi-KHd1aaa-Q0
