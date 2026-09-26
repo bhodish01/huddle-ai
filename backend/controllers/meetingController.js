@@ -6,7 +6,7 @@ export const createMeeting = async (req, res) => {
   try {
     const meetId = crypto.randomUUID().slice(0, 8);
 
-    const hostId = req.user;
+    const hostId = req.user.id || req.user;
 
     const newMeeting = new Meeting({
       meetingId: meetId,
@@ -29,7 +29,7 @@ export const createMeeting = async (req, res) => {
 export const joinMeeting = async (req, res) => {
   try {
     const { meetingId } = req.body;
-    const userId = req.user;
+    const userId = req.user.id || req.user;
 
     if (!meetingId)
       return res.status(400).json({ message: "Meeting ID required" });
@@ -79,9 +79,12 @@ export const summarizeMeeting = async (req, res) => {
     meeting.status = "ended";
     await meeting.save();
 
-    res
-      .status(200)
-      .json({ message: "Meeting summarized successfully", meeting });
+    return res.status(200).json({
+      message: "Meeting summarized successfully",
+      meeting,
+      summary,
+      actionItems,
+    });
   } catch (error) {
     console.error("Summarize Controller Error:", error);
     res
