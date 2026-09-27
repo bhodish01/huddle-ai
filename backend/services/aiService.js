@@ -7,6 +7,8 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const generateMeetingSummary = async (transcriptList) => {
   if (!transcriptList || transcriptList.length === 0) {
     return {
@@ -30,42 +32,72 @@ Provide:
 Transcript:
 ${formattedTranscript}`;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            summary: {
-              type: Type.STRING,
-              description: "Comprehensive executive summary of the meeting.",
+  const schemaConfig = {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: Type.OBJECT,
+      properties: {
+        summary: {
+          type: Type.STRING,
+          description: "Comprehensive executive summary of the meeting.",
+        },
+        actionItems: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              task: { type: Type.STRING },
+              assignee: { type: Type.STRING },
             },
-            actionItems: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  task: { type: Type.STRING },
-                  assignee: { type: Type.STRING },
-                },
-                required: ["task", "assignee"],
-              },
-            },
+            required: ["task", "assignee"],
           },
-          required: ["summary", "actionItems"],
         },
       },
-    });
-    return JSON.parse(response.text.trim());
-  } catch (error) {
-    console.error("Gemini Summarization Error:", error);
-    return {
-      summary:
-        "Meeting concluded. (AI summarizer encountered an API issue, but transcript was recorded).",
-      actionItems: [{ task: "Review meeting notes", assignee: "Team" }],
-    };
+      required: ["summary", "actionItems"],
+    },
+  };
+
+  const candidateModels = ["gemini-3.8-flash", "gemini-flash-latest"];
+
+  for (const modelName of candidateModels) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(
+          `[AI Service] Attempt ${attempt} calling model: ${modelName}`,
+        );
+
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: prompt,
+          config: schemaConfig,
+        });
+
+        const parsed = JSON.parse(response.text.trim());
+        console.log(
+          `[AI Service] Summary generated successfully with ${modelName}`,
+        );
+        return parsed;
+      } catch (error) {
+        console.warn(
+          `[AI Service] ${modelName} attempt ${attempt} failed:`,
+          error.message,
+        );
+
+        // If it's a 503 high demand spike, pause for 1.5 seconds before retrying
+        if (error.message?.includes("503") || error.status === 503) {
+          await wait(1500);
+        } else {
+          break;
+        }
+      }
+    }
   }
+
+  return {
+    summary:
+      "Meeting concluded. (AI summarizer encountered high demand; meeting recorded successfully).",
+    actionItems: [
+      { task: "Review meeting recording and notes", assignee: "Team" },
+    ],
+  };
 };
