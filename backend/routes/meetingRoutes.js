@@ -11,8 +11,8 @@ const router = Router();
 
 router.route("/create").post(authMiddleware, createMeeting);
 router.route("/join").post(authMiddleware, joinMeeting);
-router.route("/my-meetings", authMiddleware, getMeetingHistory);
+router.route("/my-meetings").get(authMiddleware, getMeetingHistory);
 
-router.route("/:meetingId/summarize", authMiddleware, summarizeMeeting);
+router.route("/:meetingId/summarize").post(authMiddleware, summarizeMeeting);
 
 export default router;
