@@ -35,10 +35,15 @@ const meetingSchema = mongoose.Schema(
         },
         text: {
           type: String,
-          required: true,
+          default: "",
         },
         timestamp: {
           type: String,
+          default: () =>
+            new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
         },
       },
     ],

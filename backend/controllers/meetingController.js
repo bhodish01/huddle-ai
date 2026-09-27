@@ -71,12 +71,26 @@ export const summarizeMeeting = async (req, res) => {
       return res.status(404).json({ message: "Meeting not found." });
     }
 
+    const cleanTranscript = (Array.isArray(transcript) ? transcript : [])
+      .map((item) => ({
+        speaker: item?.speaker || "Speaker",
+        text: (item?.text || item?.caption || item?.message || "").trim(),
+        timestamp:
+          item?.timestamp ||
+          new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+      }))
+      .filter((item) => item.text.length > 0);
+
     const { summary, actionItems } = await generateMeetingSummary(transcript);
 
-    meeting.transcript = transcript || [];
+    meeting.transcript = cleanTranscript;
     meeting.summary = summary;
     meeting.actionItems = actionItems;
     meeting.status = "ended";
+
     await meeting.save();
 
     return res.status(200).json({
