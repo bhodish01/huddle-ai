@@ -95,14 +95,14 @@ export const summarizeMeeting = async (req, res) => {
 
 export const getMeetingHistory = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id || req.user;
 
     // Find meetings where the user is either the host or in participants array
     const meetings = await Meeting.find({
-      $or: [{ host: userId }, { participants: userId }],
+      $or: [{ hostId: userId }, { participants: userId }],
     })
       .sort({ createdAt: -1 })
-      .populate("host", "username email");
+      .populate("hostId", "username email");
 
     res.status(200).json({ meetings });
   } catch (error) {
